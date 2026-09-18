@@ -29,6 +29,21 @@ pnpm exec debuglens --help
 
 For development, `pnpm dev` builds and runs the local CLI (showing its help message).
 
+## Analyze an error
+
+Provide pasted error text and the project root to inspect:
+
+```bash
+pnpm exec debuglens analyze \
+  --project . \
+  --error "TypeError: Cannot read properties of undefined (reading 'map')
+    at render (/path/to/project/src/app.ts:42:10)"
+```
+
+Use `--error-file relative/path/to/error.log` for project-local error text, or `--json` for the same structured analysis as machine-readable JSON.
+
+Exit codes: `0` means analysis completed without a probable cause, `1` means a probable cause was found, `2` is invalid input, and `3` is a tooling failure.
+
 ## Quality checks
 
 ```bash
