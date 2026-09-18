@@ -13,7 +13,7 @@
     "dev": "pnpm build && node apps/cli/dist/index.js",
     "test": "vitest run",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "pnpm --filter @debuglens/core build && tsc --noEmit",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
