@@ -98,7 +98,10 @@ describe('DebugLens CLI', () => {
 
   it('collects TypeScript project context through the CLI', async () => {
     await writeFile(join(projectRoot, 'app.ts'), 'const value: string = 1;\n');
-    await writeFile(join(projectRoot, 'tsconfig.json'), JSON.stringify({ include: ['app.ts'] }));
+    await writeFile(
+      join(projectRoot, 'tsconfig.json'),
+      JSON.stringify({ compilerOptions: { noLib: true, types: [] }, include: ['app.ts'] }),
+    );
     const output = { error: vi.fn(), log: vi.fn() };
 
     await expect(

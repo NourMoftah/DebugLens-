@@ -140,7 +140,10 @@ describe('project context collectors', () => {
     await writeFile(join(projectRoot, 'src', 'broken.ts'), 'const value: string = 1;\n');
     await writeFile(
       join(projectRoot, 'tsconfig.json'),
-      JSON.stringify({ compilerOptions: { noEmit: true }, include: ['src/**/*.ts'] }),
+      JSON.stringify({
+        compilerOptions: { noEmit: true, noLib: true, types: [] },
+        include: ['src/**/*.ts'],
+      }),
     );
 
     const context = await getTypeScriptContext(projectRoot);

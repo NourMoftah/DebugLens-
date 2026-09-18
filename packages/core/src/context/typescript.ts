@@ -70,13 +70,16 @@ export async function getTypeScriptContext(projectRoot: string): Promise<TypeScr
       ts.sys,
       resolve(projectRoot),
     );
-    const program = ts.createProgram({
-      options: parsedConfig.options,
-      rootNames: parsedConfig.fileNames,
-    });
-    const diagnostics = [...parsedConfig.errors, ...ts.getPreEmitDiagnostics(program)].map(
-      normalizeDiagnostic,
-    );
+    const program = ts.createProgram({ options: parsedConfig.options, rootNames: parsedConfig.fileNames });
+    // Pre-emit diagnostics also requests declaration diagnostics. DebugLens only
+    // reports project type-checking facts, so avoid that extra full-program pass.
+    const diagnostics = [
+      ...parsedConfig.errors,
+      ...program.getOptionsDiagnostics(),
+      ...program.getGlobalDiagnostics(),
+      ...program.getSyntacticDiagnostics(),
+      ...program.getSemanticDiagnostics(),
+    ].map(normalizeDiagnostic);
 
     return { diagnostics, status: 'available', tsconfigPath };
   } catch (error: unknown) {
