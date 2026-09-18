@@ -27,7 +27,13 @@ interface Candidate {
 }
 
 function samePath(left: string, right: string): boolean {
-  return left.replaceAll('\\', '/') === right.replaceAll('\\', '/');
+  const normalizedLeft = left.replaceAll('\\', '/');
+  const normalizedRight = right.replaceAll('\\', '/');
+  return (
+    normalizedLeft === normalizedRight ||
+    normalizedLeft.endsWith(`/${normalizedRight}`) ||
+    normalizedRight.endsWith(`/${normalizedLeft}`)
+  );
 }
 
 function matchingTypeScriptDiagnostic(

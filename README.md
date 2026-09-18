@@ -1,8 +1,6 @@
 # DebugLens
 
-DebugLens is an open-source, local-first debugging engine and command-line tool. It is currently in **Phase 3: Source Code, TypeScript, and Dependency Analysis**.
-
-This release establishes the TypeScript monorepo, reusable core package, executable CLI shell, quality tooling, deterministic error parsing, and local project-context collection. Root-cause analysis and bug-fixing capabilities are intentionally not implemented yet.
+DebugLens is an open-source, local-first JavaScript and TypeScript diagnostic tool. Paste an error or target a source location and it combines stack parsing, source context, TypeScript diagnostics, dependency declarations, and bounded Git history into a deterministic report. It does not use AI or modify code.
 
 ## Requirements
 
@@ -17,7 +15,7 @@ cd debuglens
 pnpm install
 ```
 
-## CLI
+## Installation and development
 
 Build first, then run the local executable:
 
@@ -27,9 +25,9 @@ pnpm exec debuglens --version
 pnpm exec debuglens --help
 ```
 
-For development, `pnpm dev` builds and runs the local CLI (showing its help message).
+For development, `pnpm dev` builds and runs the local CLI.
 
-## Analyze an error
+## Usage
 
 Provide pasted error text and the project root to inspect:
 
@@ -44,7 +42,7 @@ Use `--error-file relative/path/to/error.log` for project-local error text, or `
 
 Exit codes: `0` means analysis completed without a probable cause, `1` means a probable cause was found, `2` is invalid input, and `3` is a tooling failure.
 
-## Developer workflow
+### Focused analysis
 
 DebugLens discovers the nearest project root when started from a nested path. Focus a source location without a pasted stack trace:
 
@@ -52,13 +50,17 @@ DebugLens discovers the nearest project root when started from a nested path. Fo
 pnpm exec debuglens analyze --file src/app.ts --line 42 --project .
 ```
 
+### Watch and CI
+
 Use CI-friendly deterministic terminal output with `--ci`; combine it with `--json` for machine processing. Watch an error while editing project files with:
 
 ```bash
 pnpm exec debuglens watch --error-file error.log --project .
 ```
 
-Create an optional `debuglens.config.ts` at the project root:
+### Configuration
+
+Create an optional `debuglens.config.ts` at the project root. It must contain a static default object; DebugLens never executes configuration code:
 
 ```ts
 export default {
@@ -73,6 +75,40 @@ export default {
 ```
 
 Configuration is validated before analysis. Omitted options use safe defaults.
+
+## Architecture and project structure
+
+See [architecture documentation](docs/architecture.md). The repository is organized as:
+
+```text
+apps/cli/       developer-facing commands and reporters
+packages/core/  parser, context collectors, Git, and root-cause engine
+examples/       minimal reproducible error inputs
+docs/           architecture notes
+```
+
+## Capabilities
+
+- V8/Node error and stack parsing, including common Windows and Unix paths
+- Bounded, project-root-safe source context
+- Local TypeScript compiler diagnostics and package dependency metadata
+- Fixed-argument Git history collection
+- Deterministic evidence, confidence, and suggestions
+- Human-readable reports, stable JSON, focused analysis, CI mode, and watch mode
+
+## Development and testing
+
+```bash
+pnpm format:check
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+```
+
+## Limitations and roadmap
+
+DebugLens supports common Node.js/V8 stacks and conservative deterministic rules. It does not yet provide semantic AST analysis, automatic fixes, IDE integration, cloud services, telemetry, or AI/LLM analysis. Future work can add more runtime formats and framework-specific plugins while preserving the local-first core.
 
 ## Quality checks
 

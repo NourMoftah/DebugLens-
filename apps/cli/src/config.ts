@@ -81,7 +81,51 @@ function validateConfig(value: unknown): DebugLensConfig {
   return config;
 }
 
-/** Loads a trusted project-local TypeScript configuration with validated defaults. */
+function literalValue(node: ts.Expression): unknown {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text;
+  if (ts.isNumericLiteral(node)) return Number(node.text);
+  if (
+    ts.isPrefixUnaryExpression(node) &&
+    node.operator === ts.SyntaxKind.MinusToken &&
+    ts.isNumericLiteral(node.operand)
+  ) {
+    return -Number(node.operand.text);
+  }
+  if (node.kind === ts.SyntaxKind.TrueKeyword) return true;
+  if (node.kind === ts.SyntaxKind.FalseKeyword) return false;
+  if (ts.isArrayLiteralExpression(node)) {
+    return node.elements.map((element) => {
+      if (!ts.isExpression(element)) configError('arrays may only contain literal values.');
+      return literalValue(element);
+    });
+  }
+  if (ts.isObjectLiteralExpression(node)) {
+    const result: Record<string, unknown> = {};
+    for (const property of node.properties) {
+      if (
+        !ts.isPropertyAssignment(property) ||
+        (!ts.isIdentifier(property.name) && !ts.isStringLiteral(property.name))
+      ) {
+        configError('objects may only contain named literal properties.');
+      }
+      result[property.name.text] = literalValue(property.initializer);
+    }
+    return result;
+  }
+  configError('configuration values must be static literals.');
+}
+
+function parseStaticConfig(source: string, fileName: string): unknown {
+  const sourceFile = ts.createSourceFile(fileName, source, ts.ScriptTarget.ES2022, true);
+  const declaration = sourceFile.statements.find((statement): statement is ts.ExportAssignment =>
+    ts.isExportAssignment(statement),
+  );
+  if (declaration === undefined || declaration.isExportEquals)
+    configError('must use export default { ... }.');
+  return literalValue(declaration.expression);
+}
+
+/** Loads a project-local static configuration. Configuration code is never executed. */
 export async function loadConfig(projectRoot: string): Promise<DebugLensConfig> {
   const configPath = join(resolve(projectRoot), 'debuglens.config.ts');
   try {
@@ -97,15 +141,8 @@ export async function loadConfig(projectRoot: string): Promise<DebugLensConfig> 
       `Could not read debuglens.config.ts: ${error instanceof Error ? error.message : 'unknown error'}`,
     );
   }
-  const compiled = ts.transpileModule(source, {
-    compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2022 },
-    fileName: configPath,
-  });
   try {
-    const module = (await import(
-      `data:text/javascript;base64,${Buffer.from(compiled.outputText).toString('base64')}`
-    )) as { default?: unknown };
-    return validateConfig(module.default);
+    return validateConfig(parseStaticConfig(source, configPath));
   } catch (error: unknown) {
     if (error instanceof Error && error.message.startsWith('Invalid debuglens.config.ts:'))
       throw error;

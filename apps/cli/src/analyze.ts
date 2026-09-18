@@ -1,4 +1,4 @@
-import { readFile } from 'node:fs/promises';
+import { readFile, realpath } from 'node:fs/promises';
 import { isAbsolute, relative, resolve } from 'node:path';
 
 import {
@@ -37,8 +37,14 @@ export async function readErrorFile(options: ErrorFileOptions): Promise<string> 
   if (!isWithinProject(projectRoot, filePath)) {
     throw new Error('The error file must be inside the project root.');
   }
-
-  return readFile(filePath, 'utf8');
+  const [resolvedProjectRoot, resolvedFilePath] = await Promise.all([
+    realpath(projectRoot),
+    realpath(filePath),
+  ]);
+  if (!isWithinProject(resolvedProjectRoot, resolvedFilePath)) {
+    throw new Error('The error file resolves outside the project root.');
+  }
+  return readFile(resolvedFilePath, 'utf8');
 }
 
 /** Runs the existing parser, project context, Git context, and root-cause engine. */

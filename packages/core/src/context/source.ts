@@ -13,6 +13,7 @@ const languageByExtension: Readonly<Record<string, SourceLanguage>> = {
   '.ts': 'typescript',
   '.tsx': 'typescript',
 };
+const maximumSourceFileBytes = 5 * 1024 * 1024;
 
 function detectLanguage(filePath: string): SourceLanguage {
   const extensionStart = filePath.lastIndexOf('.');
@@ -122,6 +123,17 @@ export async function getSourceContext(options: SourceContextOptions): Promise<S
       return createContext(filePath, language, {
         error: { code: 'not-a-file', message: 'The requested path is not a file.' },
         exists: false,
+        isOutsideProject: false,
+        lines: [],
+      });
+    }
+    if (fileStats.size > maximumSourceFileBytes) {
+      return createContext(filePath, language, {
+        error: {
+          code: 'file-too-large',
+          message: `The source file exceeds the ${maximumSourceFileBytes} byte limit.`,
+        },
+        exists: true,
         isOutsideProject: false,
         lines: [],
       });

@@ -75,6 +75,18 @@ describe('project context collectors', () => {
     ).resolves.toMatchObject({ error: { code: 'line-not-found' }, exists: true, lines: [] });
   });
 
+  it('rejects oversized source files before reading their contents', async () => {
+    await writeFile(join(projectRoot, 'src', 'large.js'), 'x'.repeat(5 * 1024 * 1024 + 1));
+
+    await expect(
+      getSourceContext({ filePath: 'src/large.js', line: 1, projectRoot }),
+    ).resolves.toMatchObject({
+      error: { code: 'file-too-large' },
+      exists: true,
+      lines: [],
+    });
+  });
+
   it('safely reports missing, invalid, and outside-project paths', async () => {
     await expect(
       getSourceContext({ filePath: 'src/missing.ts', line: 1, projectRoot }),

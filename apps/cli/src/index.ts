@@ -130,6 +130,14 @@ export async function run(
     output.log(helpText);
     return exitCode.invalidInput;
   }
+  if (argumentsList[1] === '--help' || argumentsList[1] === '-h') {
+    output.log(
+      command === 'analyze'
+        ? 'Usage: debuglens analyze (--error <text> | --error-file <path> | --file <path> --line <number>) [--project <path>] [--json] [--ci]'
+        : 'Usage: debuglens watch (--error <text> | --error-file <path>) [--project <path>] [--json] [--ci]',
+    );
+    return exitCode.analysisComplete;
+  }
   const parsed = parseArguments(argumentsList.slice(1), command === 'watch');
   if (typeof parsed === 'string') {
     output.error(parsed);
@@ -154,7 +162,11 @@ export async function run(
     watcher.close();
     return exitCode.analysisComplete;
   } catch (error: unknown) {
-    output.error(error instanceof Error ? error.message : 'DebugLens could not complete analysis.');
+    const message =
+      error instanceof Error ? error.message : 'DebugLens could not complete analysis.';
+    if (parsed.json)
+      output.log(`${JSON.stringify({ error: { code: 'tooling-failure', message } })}\n`);
+    else output.error(message);
     return exitCode.toolingFailure;
   }
 }

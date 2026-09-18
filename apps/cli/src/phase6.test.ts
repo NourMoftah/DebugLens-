@@ -35,6 +35,11 @@ describe('Phase 6 developer experience', () => {
       'export default { maxSourceContext: -1 };\n',
     );
     await expect(loadConfig(root)).rejects.toThrow('maxSourceContext');
+    await writeFile(
+      join(root, 'debuglens.config.ts'),
+      'export default { git: process.env.FLAG };\n',
+    );
+    await expect(loadConfig(root)).rejects.toThrow('static literals');
   });
 
   it('discovers a nested project root from a project marker', async () => {
@@ -75,6 +80,23 @@ describe('Phase 6 developer experience', () => {
       run(['analyze', '--project', root, '--file', '../outside.ts', '--line', '1'], output),
     ).resolves.toBe(3);
     expect(output.error).toHaveBeenCalled();
+  });
+
+  it('returns machine-readable errors for JSON tooling failures and documents subcommand help', async () => {
+    const output = { error: vi.fn(), log: vi.fn() };
+    await expect(
+      run(
+        ['analyze', '--project', root, '--file', '../outside.ts', '--line', '1', '--json'],
+        output,
+      ),
+    ).resolves.toBe(3);
+    expect(JSON.parse(output.log.mock.calls[0]?.[0] as string)).toMatchObject({
+      error: { code: 'tooling-failure' },
+    });
+    await expect(run(['analyze', '--help'], output)).resolves.toBe(0);
+    expect(output.log).toHaveBeenLastCalledWith(
+      expect.stringContaining('Usage: debuglens analyze'),
+    );
   });
 
   it('closes project watchers cleanly when files change or watch handles are unavailable', async () => {
