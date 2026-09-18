@@ -1,0 +1,15 @@
+{
+  "name": "@debuglens/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "debuglens": "./bin/debuglens.mjs"
+  },
+  "scripts": {
+    "build": "tsc --project tsconfig.json"
+  },
+  "dependencies": {
+    "@debuglens/core": "workspace:*"
+  }
+}
