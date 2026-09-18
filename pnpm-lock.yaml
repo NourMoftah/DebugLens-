@@ -40,6 +40,9 @@ importers:
       '@debuglens/core':
         specifier: workspace:*
         version: link:../../packages/core
+      typescript:
+        specifier: ^5.8.2
+        version: 5.9.3
 
   packages/core:
     dependencies:

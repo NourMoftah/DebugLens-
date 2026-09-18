@@ -10,6 +10,7 @@
     "build": "tsc --project tsconfig.json"
   },
   "dependencies": {
-    "@debuglens/core": "workspace:*"
+    "@debuglens/core": "workspace:*",
+    "typescript": "^5.8.2"
   }
 }

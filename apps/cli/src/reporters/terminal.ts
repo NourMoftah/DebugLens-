@@ -13,7 +13,7 @@ function section(title: string, lines: readonly string[]): string[] {
 }
 
 /** Formats a readable, width-tolerant diagnostic report without ANSI escape codes. */
-export function formatTerminalReport(result: CliAnalysisResult): string {
+export function formatTerminalReport(result: CliAnalysisResult, color = false): string {
   const { analysis, diagnostic, gitContext, projectContext } = result;
   const errorLines = [
     `Type: ${diagnostic.error.name}`,
@@ -50,8 +50,9 @@ export function formatTerminalReport(result: CliAnalysisResult): string {
     contextLines.push('Git: unavailable');
   }
 
+  const heading = (value: string): string => (color ? `\u001B[1;36m${value}\u001B[0m` : value);
   const lines = [
-    'DebugLens Diagnostic Report',
+    heading('DebugLens Diagnostic Report'),
     ...section('Error', errorLines),
     ...section('Root Cause', [
       `Probable cause: ${analysis.rootCause.kind} — ${analysis.rootCause.summary}`,

@@ -44,6 +44,36 @@ Use `--error-file relative/path/to/error.log` for project-local error text, or `
 
 Exit codes: `0` means analysis completed without a probable cause, `1` means a probable cause was found, `2` is invalid input, and `3` is a tooling failure.
 
+## Developer workflow
+
+DebugLens discovers the nearest project root when started from a nested path. Focus a source location without a pasted stack trace:
+
+```bash
+pnpm exec debuglens analyze --file src/app.ts --line 42 --project .
+```
+
+Use CI-friendly deterministic terminal output with `--ci`; combine it with `--json` for machine processing. Watch an error while editing project files with:
+
+```bash
+pnpm exec debuglens watch --error-file error.log --project .
+```
+
+Create an optional `debuglens.config.ts` at the project root:
+
+```ts
+export default {
+  maxSourceContext: 3,
+  git: true,
+  typescript: true,
+  dependencies: true,
+  ignoredDirectories: ['node_modules', 'dist'],
+  reporter: 'terminal',
+  watch: { debounceMs: 250 },
+};
+```
+
+Configuration is validated before analysis. Omitted options use safe defaults.
+
 ## Quality checks
 
 ```bash
